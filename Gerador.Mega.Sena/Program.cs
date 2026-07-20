@@ -7,17 +7,15 @@ namespace Gerador.Mega.Sena
 {
     class Program
     {
+        private const string Indentacao = "     ";
+        private const int AtrasoAnimacaoMs = 12;
+        private const int AtrasoMenorMs = 800;
+        private const int AtrasoPequenoMs = 1800;
+        private const int MultiplicadorMaximoTentativas = 200;
+
         static void Main(string[] args)
         {
-            string palavraMenorNumero = string.Empty;
-            string palavraMaiorNumero = string.Empty;
-            string palavraQuantidadeNumeros = string.Empty;
-            string palavraQuantidadeDeJogadas = string.Empty;
-            int menorNumero = 0;
-            int maiorNumero = 0;
-            int quantidadeDeNumeros = 0;
-            int quantidadeDeJogadas = 0;
-            var jogadas = new List<string>();
+            var random = new Random();
 
             PulaLinha();
             PulaLinha();
@@ -38,33 +36,9 @@ namespace Gerador.Mega.Sena
             PequenaPausa();
             PulaLinha();
 
-            while (menorNumero == 0)
-            {
-                caracteres = "     Por favor digite o MENOR número possível a ser gerado e pressione a tecla Enter:".ToCharArray();
-                EscreverLinha(caracteres);
-
-                PulaLinha();
-                PulaLinha();
-                Espaco();
-
-                palavraMenorNumero = Console.ReadLine();
-                Int32.TryParse(palavraMenorNumero, out menorNumero);
-            }
-
+            int menorNumero = LerInteiroPositivo("Por favor digite o MENOR número possível a ser gerado e pressione a tecla Enter:");
             PulaLinha();
-
-            while (maiorNumero == 0)
-            {
-                caracteres = "     Por favor digite o MAIOR número possível a ser gerado e pressione a tecla Enter:".ToCharArray();
-                EscreverLinha(caracteres);
-
-                PulaLinha();
-                PulaLinha();
-                Espaco();
-
-                palavraMaiorNumero = Console.ReadLine();
-                Int32.TryParse(palavraMaiorNumero, out maiorNumero);
-            }
+            int maiorNumero = LerInteiroPositivo("Por favor digite o MAIOR número possível a ser gerado e pressione a tecla Enter:");
 
             PulaLinha();
 
@@ -75,32 +49,34 @@ namespace Gerador.Mega.Sena
                 menorNumero = inversao;
             }
 
-            while (quantidadeDeNumeros == 0)
-            {
-                caracteres = "     Por favor me diga quantos números você precisa agora?".ToCharArray();
-                EscreverLinha(caracteres);
-
-                PulaLinha();
-                PulaLinha();
-                Espaco();
-
-                palavraQuantidadeNumeros = Console.ReadLine();
-                Int32.TryParse(palavraQuantidadeNumeros, out quantidadeDeNumeros);
-            }
+            int quantidadeDeNumeros = LerInteiroPositivo("Por favor me diga quantos números você precisa agora?");
 
             PulaLinha();
 
-            while (quantidadeDeJogadas == 0)
+            int quantidadeDeJogadas = LerInteiroPositivo("Por favor me diga quantas jogadas você precisa agora?");
+
+            int tamanhoIntervalo = (maiorNumero - menorNumero) + 1;
+
+            if (quantidadeDeNumeros > tamanhoIntervalo)
             {
-                caracteres = "     Por favor me diga quantas jogadas você precisa agora?".ToCharArray();
+                PulaLinha();
+                caracteres = "     Não é possível gerar números únicos nessa quantidade para o intervalo informado.".ToCharArray();
                 EscreverLinha(caracteres);
-
                 PulaLinha();
-                PulaLinha();
-                Espaco();
+                Console.WriteLine("     Pressione qualquer tecla para sair...");
+                Console.Read();
+                return;
+            }
 
-                palavraQuantidadeDeJogadas = Console.ReadLine();
-                Int32.TryParse(palavraQuantidadeDeJogadas, out quantidadeDeJogadas);
+            if (!PodeGerarQuantidadeSolicitada(tamanhoIntervalo, quantidadeDeNumeros, quantidadeDeJogadas, out long maximoDeJogadas))
+            {
+                PulaLinha();
+                caracteres = $"     Não é possível gerar {quantidadeDeJogadas} jogadas únicas. Máximo possível: {maximoDeJogadas}.".ToCharArray();
+                EscreverLinha(caracteres);
+                PulaLinha();
+                Console.WriteLine("     Pressione qualquer tecla para sair...");
+                Console.Read();
+                return;
             }
 
             PulaLinha();
@@ -114,28 +90,30 @@ namespace Gerador.Mega.Sena
 
             PulaLinha();
 
-            var numerosDaSorte = new List<string>();
+            var jogadas = new List<string>(quantidadeDeJogadas);
+            var indiceJogadas = new HashSet<string>();
+            int tentativas = 0;
+            int maximoTentativas = Math.Max(quantidadeDeJogadas * MultiplicadorMaximoTentativas, 1000);
 
-            while (jogadas.Count < quantidadeDeJogadas)
+            while (jogadas.Count < quantidadeDeJogadas && tentativas < maximoTentativas)
             {
-                while (numerosDaSorte.Count < quantidadeDeNumeros)
-                {
-                    var random = new Random();
-                    string numeroDaSorte = random.Next(menorNumero, maiorNumero).ToString();
-                    numeroDaSorte = Convert.ToInt32(numeroDaSorte) < 10 ? $"0{numeroDaSorte}" : numeroDaSorte;
-
-                    if (!numerosDaSorte.Contains(numeroDaSorte.ToString()))
-                        numerosDaSorte.Add(numeroDaSorte.ToString());
-                }
-
-                numerosDaSorte = numerosDaSorte.OrderBy(x => x).ToList();
+                var numerosDaSorte = GerarJogoUnico(random, menorNumero, maiorNumero, quantidadeDeNumeros)
+                    .OrderBy(x => x)
+                    .Select(x => x < 10 ? $"0{x}" : x.ToString());
 
                 string jogada = string.Join(" - ", numerosDaSorte);
+                tentativas++;
 
-                if (!jogadas.Contains(jogada))
-                    jogadas.Add(jogada.ToString());
+                if (indiceJogadas.Add(jogada))
+                    jogadas.Add(jogada);
+            }
 
-                numerosDaSorte.Clear();
+            if (jogadas.Count < quantidadeDeJogadas)
+            {
+                PulaLinha();
+                caracteres = "     Não foi possível concluir todas as jogadas no tempo esperado. Tente reduzir a quantidade solicitada.".ToCharArray();
+                EscreverLinha(caracteres);
+                PulaLinha();
             }
 
             PulaLinha();
@@ -175,7 +153,7 @@ namespace Gerador.Mega.Sena
 
         private static void MenorPausa()
         {
-            Thread.Sleep(800);
+            Thread.Sleep(AtrasoMenorMs);
         }
 
         private static void Escrever(char[] caracteres)
@@ -185,12 +163,12 @@ namespace Gerador.Mega.Sena
 
         private static void Espaco()
         {
-            Console.Write("     ");
+            Console.Write(Indentacao);
         }
 
         private static void PequenaPausa()
         {
-            Thread.Sleep(1800);
+            Thread.Sleep(AtrasoPequenoMs);
         }
 
         private static void PulaLinha()
@@ -202,9 +180,77 @@ namespace Gerador.Mega.Sena
         {
             foreach (var caracter in caracteres)
             {
-                Thread.Sleep(12);
+                Thread.Sleep(AtrasoAnimacaoMs);
                 Console.Write(caracter);
             }
+        }
+
+        private static int LerInteiroPositivo(string mensagem)
+        {
+            int valor;
+
+            while (true)
+            {
+                EscreverLinha((Indentacao + mensagem).ToCharArray());
+
+                PulaLinha();
+                PulaLinha();
+                Espaco();
+
+                if (Int32.TryParse(Console.ReadLine(), out valor) && valor > 0)
+                    return valor;
+
+                PulaLinha();
+                EscreverLinha((Indentacao + "Valor inválido. Digite um número inteiro maior que zero.").ToCharArray());
+                PulaLinha();
+            }
+        }
+
+        private static bool PodeGerarQuantidadeSolicitada(int n, int k, int quantidadeSolicitada, out long maximoPossivel)
+        {
+            maximoPossivel = CombinacaoLimitada(n, k, quantidadeSolicitada);
+            return maximoPossivel >= quantidadeSolicitada;
+        }
+
+        private static long CombinacaoLimitada(int n, int k, int limite)
+        {
+            if (k < 0 || n < 0 || k > n)
+                return 0;
+
+            if (k == 0 || k == n)
+                return 1;
+
+            if (k > n - k)
+                k = n - k;
+
+            decimal resultado = 1m;
+            decimal limiteDecimal = limite;
+
+            for (int i = 1; i <= k; i++)
+            {
+                resultado *= (n - (k - i));
+                resultado /= i;
+
+                if (resultado >= limiteDecimal)
+                    return limite;
+            }
+
+            return (long)resultado;
+        }
+
+        private static IEnumerable<int> GerarJogoUnico(Random random, int menorNumero, int maiorNumero, int quantidadeDeNumeros)
+        {
+            var universo = Enumerable.Range(menorNumero, (maiorNumero - menorNumero) + 1).ToList();
+
+            for (int i = 0; i < quantidadeDeNumeros; i++)
+            {
+                int indiceSorteado = random.Next(i, universo.Count);
+                int troca = universo[i];
+                universo[i] = universo[indiceSorteado];
+                universo[indiceSorteado] = troca;
+            }
+
+            return universo.Take(quantidadeDeNumeros);
         }
     }
 }
