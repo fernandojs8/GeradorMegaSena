@@ -22,32 +22,15 @@ namespace Gerador.Mega.Sena
             PulaLinha();
             PulaLinha();
 
-            var caracteres = "             -= Gerador de números aleatórios para a ganhar na Mega Sena! =-".ToCharArray();
+            var caracteres = "     -= Gerador de números aleatórios para a ganhar na Mega Sena! =-".ToCharArray();
 
             EscreverLinha(caracteres);
             PulaLinha();
             PulaLinha();
             PequenaPausa();
 
-            caracteres = "     Primeiro vamos entender qual é o espaço entre o MENOR e o MAIOR número a serem gerados!".ToCharArray();
-
-            EscreverLinha(caracteres);
-            PulaLinha();
-            PequenaPausa();
-            PulaLinha();
-
-            int menorNumero = LerInteiroPositivo("Por favor digite o MENOR número possível a ser gerado e pressione a tecla Enter:");
-            PulaLinha();
-            int maiorNumero = LerInteiroPositivo("Por favor digite o MAIOR número possível a ser gerado e pressione a tecla Enter:");
-
-            PulaLinha();
-
-            if (maiorNumero < menorNumero)
-            {
-                int inversao = maiorNumero;
-                maiorNumero = menorNumero;
-                menorNumero = inversao;
-            }
+            int menorNumero = 1;
+            int maiorNumero = 60;
 
             int quantidadeDeNumeros = LerInteiroPositivo("Por favor me diga quantos números você precisa agora?");
 
