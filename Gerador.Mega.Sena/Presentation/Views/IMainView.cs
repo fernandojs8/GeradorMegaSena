@@ -9,6 +9,8 @@ internal interface IMainView
 
     event EventHandler LanguageChanged;
 
+    event EventHandler ExportRequested;
+
     string SelectedGameId { get; }
 
     string SelectedLanguageCode { get; }
@@ -16,6 +18,11 @@ internal interface IMainView
     int PicksPerPlay { get; }
 
     int PlayCount { get; }
+
+    /// <summary>
+    /// Returns the user-chosen special pick value, or null when random is selected.
+    /// </summary>
+    string? SelectedSpecialPick { get; }
 
     void BindLanguages(IReadOnlyList<LanguageOptionViewModel> languages, string selectedLanguageCode);
 
@@ -25,6 +32,8 @@ internal interface IMainView
 
     void ApplyTexts(UiTextViewModel texts);
 
+    void ApplySpecialPickOptions(SpecialPickOptionsViewModel? model);
+
     void ShowError(string message);
 
     void ShowSuccess(GenerateOutputViewModel output);
@@ -32,6 +41,23 @@ internal interface IMainView
     void ShowInfo(string message);
 
     void SetGenerateEnabled(bool enabled);
+
+    /// <summary>
+    /// Shows a save-file dialog and returns the chosen path, or null if cancelled.
+    /// </summary>
+    string? PromptExportFilePath();
+}
+
+/// <summary>
+/// UI model for special pick (Time do Coracao / Mes da Sorte).
+/// </summary>
+internal sealed class SpecialPickOptionsViewModel
+{
+    public required string Label { get; init; }
+
+    public required IReadOnlyList<string> Options { get; init; }
+
+    public required string RandomLabel { get; init; }
 }
 
 /// <summary>
@@ -53,7 +79,13 @@ internal sealed class GameOptionViewModel
 
     public required int MaxPicks { get; init; }
 
+    public string? SpecialPickLabel { get; init; }
+
+    public IReadOnlyList<string>? SpecialPickOptions { get; init; }
+
     public bool HasFixedPickCount => MinPicks == MaxPicks;
+
+    public bool HasSpecialPick => SpecialPickOptions is { Count: > 0 };
 }
 
 /// <summary>
@@ -106,6 +138,10 @@ internal sealed class UiTextViewModel
     public required string DescriptionRangeTemplate { get; init; }
 
     public required string DescriptionFixedTemplate { get; init; }
+
+    public required string ExportButton { get; init; }
+
+    public required string SpecialPickRandomLabel { get; init; }
 }
 
 /// <summary>

@@ -92,7 +92,9 @@ internal sealed class InMemoryLocalizationService : ILocalizationService
         ["desc.range"] = "Escolha de {0} a {1} numeros entre {2} e {3}.",
         ["desc.fixed"] = "Escolha fixa de {0} numeros entre {1} e {2}.",
         ["msg.noGames"] = "Nenhuma modalidade foi configurada.",
-        ["msg.errorGeneric"] = "Nao foi possivel gerar as jogadas."
+        ["msg.errorGeneric"] = "Nao foi possivel gerar as jogadas.",
+        ["button.export"] = "Exportar",
+        ["specialPick.random"] = "Aleatorio"
     };
 
     private static IReadOnlyDictionary<string, string> BuildEn() => new Dictionary<string, string>
@@ -116,7 +118,9 @@ internal sealed class InMemoryLocalizationService : ILocalizationService
         ["desc.range"] = "Pick from {0} to {1} numbers between {2} and {3}.",
         ["desc.fixed"] = "Fixed pick of {0} numbers between {1} and {2}.",
         ["msg.noGames"] = "No game was configured.",
-        ["msg.errorGeneric"] = "Unable to generate plays."
+        ["msg.errorGeneric"] = "Unable to generate plays.",
+        ["button.export"] = "Export",
+        ["specialPick.random"] = "Random"
     };
 
     private static IReadOnlyDictionary<string, string> BuildFr() => new Dictionary<string, string>
@@ -140,7 +144,9 @@ internal sealed class InMemoryLocalizationService : ILocalizationService
         ["desc.range"] = "Choisissez de {0} a {1} numeros entre {2} et {3}.",
         ["desc.fixed"] = "Choix fixe de {0} numeros entre {1} et {2}.",
         ["msg.noGames"] = "Aucun jeu configure.",
-        ["msg.errorGeneric"] = "Impossible de generer les grilles."
+        ["msg.errorGeneric"] = "Impossible de generer les grilles.",
+        ["button.export"] = "Exporter",
+        ["specialPick.random"] = "Aleatoire"
     };
 
     private static IReadOnlyDictionary<string, string> BuildEs() => new Dictionary<string, string>
@@ -164,7 +170,9 @@ internal sealed class InMemoryLocalizationService : ILocalizationService
         ["desc.range"] = "Elige de {0} a {1} numeros entre {2} y {3}.",
         ["desc.fixed"] = "Eleccion fija de {0} numeros entre {1} y {2}.",
         ["msg.noGames"] = "No hay juego configurado.",
-        ["msg.errorGeneric"] = "No se pudieron generar las jugadas."
+        ["msg.errorGeneric"] = "No se pudieron generar las jugadas.",
+        ["button.export"] = "Exportar",
+        ["specialPick.random"] = "Aleatorio"
     };
 
     private static IReadOnlyDictionary<string, string> BuildDe() => new Dictionary<string, string>
@@ -188,6 +196,8 @@ internal sealed class InMemoryLocalizationService : ILocalizationService
         ["desc.range"] = "Wahlen Sie {0} bis {1} Zahlen zwischen {2} und {3}.",
         ["desc.fixed"] = "Feste Auswahl von {0} Zahlen zwischen {1} und {2}.",
         ["msg.noGames"] = "Kein Spiel konfiguriert.",
-        ["msg.errorGeneric"] = "Tipps konnten nicht generiert werden."
+        ["msg.errorGeneric"] = "Tipps konnten nicht generiert werden.",
+        ["button.export"] = "Exportieren",
+        ["specialPick.random"] = "Zufallig"
     };
 }

@@ -1,3 +1,4 @@
+using System.Text;
 using Gerador.Mega.Sena.Application.Abstractions;
 using Gerador.Mega.Sena.Application.UseCases;
 using Gerador.Mega.Sena.Presentation.Views;
@@ -14,6 +15,7 @@ internal sealed class MainController
     private readonly ILocalizationService _localization;
     private readonly GeneratePlaysUseCase _generatePlaysUseCase;
     private IReadOnlyList<GameOptionViewModel> _games = [];
+    private GeneratePlaysResult? _lastResult;
 
     public MainController(
         IMainView view,
@@ -28,6 +30,7 @@ internal sealed class MainController
 
         _view.GenerateRequested += OnGenerateRequested;
         _view.LanguageChanged += OnLanguageChanged;
+        _view.ExportRequested += OnExportRequested;
     }
 
     public void Initialize()
@@ -56,6 +59,7 @@ internal sealed class MainController
         }
 
         ApplyRules(game);
+        ApplySpecialPickForGame(game);
 
         if (game.HasFixedPickCount)
         {
@@ -87,7 +91,9 @@ internal sealed class MainController
                 MinNumber = game.MinNumber,
                 MaxNumber = game.MaxNumber,
                 MinPicks = game.MinPicks,
-                MaxPicks = game.MaxPicks
+                MaxPicks = game.MaxPicks,
+                SpecialPickLabel = game.SpecialPickLabel,
+                SpecialPickOptions = game.SpecialPickOptions
             })
             .ToList();
 
@@ -103,6 +109,7 @@ internal sealed class MainController
 
         GameOptionViewModel selected = _games.FirstOrDefault(x => x.Id == selectedGameId) ?? first;
         ApplyRules(selected);
+        ApplySpecialPickForGame(selected);
         if (selected.HasFixedPickCount)
         {
             _view.ShowInfo(string.Format(_localization.Get("status.fixedTemplate"), selected.Name, selected.MinPicks));
@@ -123,7 +130,8 @@ internal sealed class MainController
             {
                 GameId = _view.SelectedGameId,
                 PicksPerPlay = _view.PicksPerPlay,
-                PlayCount = _view.PlayCount
+                PlayCount = _view.PlayCount,
+                SpecialPick = _view.SelectedSpecialPick
             });
 
             if (!result.IsSuccess)
@@ -131,6 +139,8 @@ internal sealed class MainController
                 _view.ShowError(result.Error ?? _localization.Get("msg.errorGeneric"));
                 return;
             }
+
+            _lastResult = result;
 
             _view.ShowSuccess(new GenerateOutputViewModel
             {
@@ -146,6 +156,24 @@ internal sealed class MainController
         }
     }
 
+    private void OnExportRequested(object? sender, EventArgs e)
+    {
+        if (_lastResult is null || !_lastResult.IsSuccess)
+        {
+            return;
+        }
+
+        string? path = _view.PromptExportFilePath();
+        if (path is null)
+        {
+            return;
+        }
+
+        bool isCsv = path.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);
+        string content = isCsv ? FormatCsv(_lastResult) : FormatTxt(_lastResult);
+        File.WriteAllText(path, content, Encoding.UTF8);
+    }
+
     private void ApplyRules(GameOptionViewModel game)
     {
         _view.ApplyGameRules(new GameRulesViewModel
@@ -155,6 +183,23 @@ internal sealed class MainController
             MaxPicks = game.MaxPicks,
             HasFixedPickCount = game.HasFixedPickCount
         });
+    }
+
+    private void ApplySpecialPickForGame(GameOptionViewModel game)
+    {
+        if (game.HasSpecialPick && game.SpecialPickLabel is not null && game.SpecialPickOptions is not null)
+        {
+            _view.ApplySpecialPickOptions(new SpecialPickOptionsViewModel
+            {
+                Label = game.SpecialPickLabel,
+                Options = game.SpecialPickOptions,
+                RandomLabel = _localization.Get("specialPick.random")
+            });
+        }
+        else
+        {
+            _view.ApplySpecialPickOptions(null);
+        }
     }
 
     private void ApplyTexts()
@@ -178,7 +223,9 @@ internal sealed class MainController
             SuccessStatusTemplate = _localization.Get("status.success"),
             SuccessStatusWithWarningTemplate = _localization.Get("status.successWarning"),
             DescriptionRangeTemplate = _localization.Get("desc.range"),
-            DescriptionFixedTemplate = _localization.Get("desc.fixed")
+            DescriptionFixedTemplate = _localization.Get("desc.fixed"),
+            ExportButton = _localization.Get("button.export"),
+            SpecialPickRandomLabel = _localization.Get("specialPick.random")
         });
     }
 
@@ -190,5 +237,37 @@ internal sealed class MainController
         }
 
         return string.Format(_localization.Get("desc.range"), minPicks, maxPicks, minNumber, maxNumber);
+    }
+
+    private static string FormatTxt(GeneratePlaysResult result)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"Jogo: {result.GameName}");
+        sb.AppendLine($"Numeros por jogada: {result.PicksPerPlay}");
+        sb.AppendLine(new string('-', 50));
+        for (int i = 0; i < result.Plays.Count; i++)
+        {
+            sb.AppendLine($"{i + 1:00}) {result.Plays[i]}");
+        }
+
+        if (result.Warning is not null)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"Aviso: {result.Warning}");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string FormatCsv(GeneratePlaysResult result)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Jogo,NumerosJogada,Numeros");
+        foreach (string play in result.Plays)
+        {
+            sb.AppendLine($"{result.GameName},{result.PicksPerPlay},{play}");
+        }
+
+        return sb.ToString();
     }
 }

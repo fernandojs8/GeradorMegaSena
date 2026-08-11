@@ -12,7 +12,9 @@ internal sealed class LotteryGame
         int maxNumber,
         int minPicks,
         int maxPicks,
-        string description)
+        string description,
+        string? specialPickLabel = null,
+        IReadOnlyList<string>? specialPickOptions = null)
     {
         Id = id;
         Name = name;
@@ -21,6 +23,8 @@ internal sealed class LotteryGame
         MinPicks = minPicks;
         MaxPicks = maxPicks;
         Description = description;
+        SpecialPickLabel = specialPickLabel;
+        SpecialPickOptions = specialPickOptions;
     }
 
     public string Id { get; }
@@ -37,5 +41,11 @@ internal sealed class LotteryGame
 
     public string Description { get; }
 
+    public string? SpecialPickLabel { get; }
+
+    public IReadOnlyList<string>? SpecialPickOptions { get; }
+
     public bool HasFixedPickCount => MinPicks == MaxPicks;
+
+    public bool HasSpecialPick => SpecialPickOptions is { Count: > 0 };
 }

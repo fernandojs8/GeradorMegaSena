@@ -153,12 +153,31 @@ Projeto de testes: Gerador.Mega.Sena.Tests
 - Documentacao XML em classes principais.
 - Regra de negocio isolada da UI.
 
+## Exportacao
+
+As jogadas geradas podem ser salvas diretamente da interface clicando em **Exportar**:
+
+- **TXT**: formato legivel com cabecalho e numeracao de jogadas.
+- **CSV**: formato tabulado para importar em planilhas (colunas: Jogo, NumerosJogada, Numeros).
+
+## Publicacao self-contained
+
+Para gerar um executavel unico sem dependencia do .NET instalado:
+
+```bash
+dotnet publish Gerador.Mega.Sena/Gerador.Mega.Sena.csproj \
+  /p:PublishProfile=win-x64-self-contained
+```
+
+O arquivo sera gerado em `Gerador.Mega.Sena/publish/win-x64/`.
+
 ## Proximos passos sugeridos
 
-- Adicionar testes unitarios para Domain e Application.
-- Adicionar exportacao para TXT/CSV.
-- Adicionar Time do Coracao (Timemania) e Mes da Sorte (Dia de Sorte).
-- Criar instalador/publicacao self-contained.
+Todos os passos anteriores foram implementados. Possiveis melhorias futuras:
+
+- Adicionar suporte a mais loterias (ex.: Super Sete, +Milionaria).
+- Persistir configuracoes do usuario entre sessoes.
+- Adicionar tema escuro na interface.
 
 ## Licenca
 

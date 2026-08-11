@@ -63,7 +63,22 @@ internal sealed class GeneratePlaysUseCase
 
         PlayBatchResult batch = _generator.Generate(game.MinNumber, game.MaxNumber, request.PicksPerPlay, request.PlayCount);
 
-        return GeneratePlaysResult.Success(game.Name, request.PicksPerPlay, batch.Plays, batch.Warning);
+        IReadOnlyList<string> finalPlays = batch.Plays;
+        if (game.HasSpecialPick)
+        {
+            var rng = new Random();
+            finalPlays = batch.Plays
+                .Select(play =>
+                {
+                    string pick = string.IsNullOrEmpty(request.SpecialPick)
+                        ? game.SpecialPickOptions![rng.Next(game.SpecialPickOptions.Count)]
+                        : request.SpecialPick;
+                    return $"{play} | {pick}";
+                })
+                .ToList();
+        }
+
+        return GeneratePlaysResult.Success(game.Name, request.PicksPerPlay, finalPlays, batch.Warning);
     }
 }
 
@@ -77,6 +92,11 @@ internal sealed class GeneratePlaysRequest
     public required int PicksPerPlay { get; init; }
 
     public required int PlayCount { get; init; }
+
+    /// <summary>
+    /// Specific special pick value; null means a random option is chosen per play.
+    /// </summary>
+    public string? SpecialPick { get; init; }
 }
 
 /// <summary>

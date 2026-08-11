@@ -72,11 +72,57 @@ public sealed class GeneratePlaysUseCaseTests
         Assert.Equal("Mini Loto", result.GameName);
     }
 
+    [Fact]
+    public void Execute_WithSpecialPickGame_AppendsPickToEachPlay()
+    {
+        var useCase = new GeneratePlaysUseCase(new FakeCatalogWithSpecialPick(), new UniquePlayGenerator());
+
+        GeneratePlaysResult result = useCase.Execute(new GeneratePlaysRequest
+        {
+            GameId = "especial",
+            PicksPerPlay = 2,
+            PlayCount = 3
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.All(result.Plays, play => Assert.Contains(" | ", play));
+    }
+
+    [Fact]
+    public void Execute_WithExplicitSpecialPick_UsesThatPickForAllPlays()
+    {
+        var useCase = new GeneratePlaysUseCase(new FakeCatalogWithSpecialPick(), new UniquePlayGenerator());
+
+        GeneratePlaysResult result = useCase.Execute(new GeneratePlaysRequest
+        {
+            GameId = "especial",
+            PicksPerPlay = 2,
+            PlayCount = 3,
+            SpecialPick = "OpcaoA"
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.All(result.Plays, play => Assert.EndsWith(" | OpcaoA", play));
+    }
+
     private sealed class FakeCatalog : ILotteryGameCatalog
     {
         private static readonly IReadOnlyList<LotteryGame> Games =
         [
             new LotteryGame("mini", "Mini Loto", 1, 5, 2, 4, "Jogo de teste")
+        ];
+
+        public IReadOnlyList<LotteryGame> GetAll() => Games;
+
+        public LotteryGame? GetById(string id) => Games.FirstOrDefault(x => x.Id == id);
+    }
+
+    private sealed class FakeCatalogWithSpecialPick : ILotteryGameCatalog
+    {
+        private static readonly IReadOnlyList<LotteryGame> Games =
+        [
+            new LotteryGame("especial", "Especial", 1, 10, 2, 4, "Jogo com especial",
+                "Elemento", ["OpcaoA", "OpcaoB", "OpcaoC"])
         ];
 
         public IReadOnlyList<LotteryGame> GetAll() => Games;

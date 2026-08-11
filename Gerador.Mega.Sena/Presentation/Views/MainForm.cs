@@ -32,7 +32,9 @@ internal sealed class MainForm : Form, IMainView
         SuccessStatusTemplate = "Geradas {0} jogadas com sucesso.",
         SuccessStatusWithWarningTemplate = "Geradas {0} jogadas com aviso.",
         DescriptionRangeTemplate = "Escolha de {0} a {1} numeros entre {2} e {3}.",
-        DescriptionFixedTemplate = "Escolha fixa de {0} numeros entre {1} e {2}."
+        DescriptionFixedTemplate = "Escolha fixa de {0} numeros entre {1} e {2}.",
+        ExportButton = "Exportar",
+        SpecialPickRandomLabel = "Aleatorio"
     };
 
     private readonly ComboBox _comboIdiomas;
@@ -50,10 +52,15 @@ internal sealed class MainForm : Form, IMainView
     private readonly Label _labelJogadas;
     private readonly Label _tituloResultados;
     private readonly Button _botaoGerar;
+    private readonly Label _labelEspecial;
+    private readonly ComboBox _comboEspecial;
+    private readonly Button _botaoExportar;
 
     public event EventHandler? GenerateRequested;
 
     public event EventHandler? LanguageChanged;
+
+    public event EventHandler? ExportRequested;
 
     public string SelectedGameId
     {
@@ -84,6 +91,19 @@ internal sealed class MainForm : Form, IMainView
     public int PicksPerPlay => (int)_inputQuantidadeNumeros.Value;
 
     public int PlayCount => (int)_inputQuantidadeJogadas.Value;
+
+    public string? SelectedSpecialPick
+    {
+        get
+        {
+            if (!_comboEspecial.Visible || _comboEspecial.SelectedItem is not ComboItem item || item.Id == string.Empty)
+            {
+                return null;
+            }
+
+            return item.Id;
+        }
+    }
 
     public MainForm()
     {
@@ -157,7 +177,7 @@ internal sealed class MainForm : Form, IMainView
         var cardEntrada = new Panel
         {
             Location = new Point(24, 154),
-            Size = new Size(804, 202),
+            Size = new Size(804, 218),
             BackColor = Color.White,
             BorderStyle = BorderStyle.FixedSingle,
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
@@ -240,18 +260,36 @@ internal sealed class MainForm : Form, IMainView
         _botaoGerar.FlatAppearance.BorderSize = 0;
         _botaoGerar.Click += (_, _) => GenerateRequested?.Invoke(this, EventArgs.Empty);
 
+        _labelEspecial = new Label
+        {
+            Text = string.Empty,
+            AutoSize = true,
+            Location = new Point(22, 120),
+            ForeColor = Color.FromArgb(34, 52, 70),
+            Visible = false
+        };
+
+        _comboEspecial = new ComboBox
+        {
+            Location = new Point(165, 116),
+            Size = new Size(380, 28),
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            FlatStyle = FlatStyle.Flat,
+            Visible = false
+        };
+
         _labelStatus = new Label
         {
             Text = _texts.ReadyStatus,
             AutoSize = true,
-            Location = new Point(22, 138),
+            Location = new Point(22, 175),
             ForeColor = Color.FromArgb(74, 95, 113),
             Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point)
         };
 
         var cardResultados = new Panel
         {
-            Location = new Point(24, 376),
+            Location = new Point(24, 392),
             Size = new Size(804, 214),
             BackColor = Color.White,
             BorderStyle = BorderStyle.FixedSingle,
@@ -267,6 +305,21 @@ internal sealed class MainForm : Form, IMainView
             Font = new Font("Segoe UI Semibold", 11.5F, FontStyle.Bold, GraphicsUnit.Point)
         };
 
+        _botaoExportar = new Button
+        {
+            Text = _texts.ExportButton,
+            Location = new Point(644, 10),
+            Size = new Size(148, 28),
+            BackColor = Color.FromArgb(0, 90, 156),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Cursor = Cursors.Hand,
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point),
+            Enabled = false
+        };
+        _botaoExportar.FlatAppearance.BorderSize = 0;
+        _botaoExportar.Click += (_, _) => ExportRequested?.Invoke(this, EventArgs.Empty);
+
         cardEntrada.Controls.Add(_labelNumeros);
         cardEntrada.Controls.Add(_inputQuantidadeNumeros);
         cardEntrada.Controls.Add(_labelJogo);
@@ -274,6 +327,8 @@ internal sealed class MainForm : Form, IMainView
         cardEntrada.Controls.Add(_labelJogadas);
         cardEntrada.Controls.Add(_inputQuantidadeJogadas);
         cardEntrada.Controls.Add(_labelRegras);
+        cardEntrada.Controls.Add(_labelEspecial);
+        cardEntrada.Controls.Add(_comboEspecial);
         cardEntrada.Controls.Add(_botaoGerar);
         cardEntrada.Controls.Add(_labelStatus);
 
@@ -290,6 +345,7 @@ internal sealed class MainForm : Form, IMainView
         };
 
         cardResultados.Controls.Add(_tituloResultados);
+        cardResultados.Controls.Add(_botaoExportar);
         cardResultados.Controls.Add(_painelResultados);
 
         Controls.Add(faixaTopo);
@@ -360,6 +416,30 @@ internal sealed class MainForm : Form, IMainView
         _botaoGerar.Text = texts.GenerateButton;
         _tituloResultados.Text = texts.ResultsTitle;
         _labelStatus.Text = texts.ReadyStatus;
+        _botaoExportar.Text = texts.ExportButton;
+    }
+
+    public void ApplySpecialPickOptions(SpecialPickOptionsViewModel? model)
+    {
+        if (model is null)
+        {
+            _labelEspecial.Visible = false;
+            _comboEspecial.Visible = false;
+            return;
+        }
+
+        _labelEspecial.Text = model.Label + ":";
+        _labelEspecial.Visible = true;
+
+        _comboEspecial.Items.Clear();
+        _comboEspecial.Items.Add(new ComboItem(string.Empty, model.RandomLabel));
+        foreach (string option in model.Options)
+        {
+            _comboEspecial.Items.Add(new ComboItem(option, option));
+        }
+
+        _comboEspecial.SelectedIndex = 0;
+        _comboEspecial.Visible = true;
     }
 
     public void ApplyGameRules(GameRulesViewModel rules)
@@ -376,6 +456,7 @@ internal sealed class MainForm : Form, IMainView
         _labelStatus.ForeColor = Color.FromArgb(168, 34, 34);
         _labelStatus.Text = message;
         _painelResultados.Clear();
+        _botaoExportar.Enabled = false;
     }
 
     public void ShowSuccess(GenerateOutputViewModel output)
@@ -399,6 +480,21 @@ internal sealed class MainForm : Form, IMainView
         {
             _painelResultados.AppendText($"\n{_texts.WarningLabel}: {output.Warning}");
         }
+
+        _botaoExportar.Enabled = true;
+    }
+
+    public string? PromptExportFilePath()
+    {
+        using var dialog = new SaveFileDialog
+        {
+            Title = "Exportar jogadas",
+            Filter = "Arquivo de texto (*.txt)|*.txt|CSV (*.csv)|*.csv",
+            DefaultExt = "txt",
+            FileName = "jogadas"
+        };
+
+        return dialog.ShowDialog(this) == DialogResult.OK ? dialog.FileName : null;
     }
 
     public void ShowInfo(string message)

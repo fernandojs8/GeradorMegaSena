@@ -23,6 +23,17 @@ public sealed class MainControllerLanguageTests
     }
 
     [Fact]
+    public void Initialize_SetsExportButtonText()
+    {
+        var view = new FakeView();
+        var controller = CreateController(view);
+
+        controller.Initialize();
+
+        Assert.Equal("Exportar", view.LastTexts?.ExportButton);
+    }
+
+    [Fact]
     public void LanguageChanged_ToEnglish_UpdatesViewTexts()
     {
         var view = new FakeView();
@@ -33,6 +44,18 @@ public sealed class MainControllerLanguageTests
 
         Assert.Equal("Generate Plays", view.LastTexts?.GenerateButton);
         Assert.Equal("🌐 Language", view.LastTexts?.LanguageLabel);
+    }
+
+    [Fact]
+    public void LanguageChanged_ToEnglish_UpdatesExportButtonText()
+    {
+        var view = new FakeView();
+        var controller = CreateController(view);
+
+        controller.Initialize();
+        view.ChangeLanguage("en");
+
+        Assert.Equal("Export", view.LastTexts?.ExportButton);
     }
 
     private static MainController CreateController(FakeView view)
@@ -68,10 +91,17 @@ public sealed class MainControllerLanguageTests
 
         public event EventHandler? LanguageChanged;
 
+        public event EventHandler? ExportRequested
+        {
+            add { }
+            remove { }
+        }
+
         public string SelectedGameId { get; private set; } = string.Empty;
         public string SelectedLanguageCode { get; private set; } = string.Empty;
         public int PicksPerPlay { get; private set; } = 6;
         public int PlayCount { get; private set; } = 1;
+        public string? SelectedSpecialPick => null;
 
         public UiTextViewModel? LastTexts { get; private set; }
 
@@ -96,6 +126,10 @@ public sealed class MainControllerLanguageTests
             LastTexts = texts;
         }
 
+        public void ApplySpecialPickOptions(SpecialPickOptionsViewModel? model)
+        {
+        }
+
         public void ShowError(string message)
         {
         }
@@ -111,6 +145,8 @@ public sealed class MainControllerLanguageTests
         public void SetGenerateEnabled(bool enabled)
         {
         }
+
+        public string? PromptExportFilePath() => null;
 
         public void ChangeLanguage(string languageCode)
         {
