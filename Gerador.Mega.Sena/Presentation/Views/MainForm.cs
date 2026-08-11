@@ -89,7 +89,7 @@ internal sealed class MainForm : Form, IMainView
     {
         Text = _texts.FormTitle;
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(860, 600);
+        MinimumSize = new Size(980, 660);
         BackColor = Color.FromArgb(240, 244, 247);
         Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point);
         DoubleBuffered = true;
@@ -97,7 +97,7 @@ internal sealed class MainForm : Form, IMainView
         var faixaTopo = new GradientPanel
         {
             Dock = DockStyle.Top,
-            Height = 112,
+            Height = 138,
             CorInicial = Color.FromArgb(13, 52, 78),
             CorFinal = Color.FromArgb(10, 124, 138)
         };
@@ -116,9 +116,10 @@ internal sealed class MainForm : Form, IMainView
         {
             Text = _texts.HeaderSubtitle,
             Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point),
-            AutoSize = true,
+            AutoSize = false,
             ForeColor = Color.FromArgb(220, 241, 246),
             Location = new Point(24, 62),
+            Size = new Size(560, 48),
             BackColor = Color.Transparent
         };
 
@@ -127,14 +128,14 @@ internal sealed class MainForm : Form, IMainView
             Text = _texts.LanguageLabel,
             AutoSize = true,
             ForeColor = Color.FromArgb(230, 245, 250),
-            Location = new Point(610, 20),
+            Location = new Point(730, 18),
             BackColor = Color.Transparent,
             Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold, GraphicsUnit.Point)
         };
 
         _comboIdiomas = new ComboBox
         {
-            Location = new Point(612, 45),
+            Location = new Point(732, 42),
             Size = new Size(210, 31),
             DropDownStyle = ComboBoxStyle.DropDownList,
             FlatStyle = FlatStyle.Flat,
@@ -155,7 +156,7 @@ internal sealed class MainForm : Form, IMainView
 
         var cardEntrada = new Panel
         {
-            Location = new Point(24, 128),
+            Location = new Point(24, 154),
             Size = new Size(804, 202),
             BackColor = Color.White,
             BorderStyle = BorderStyle.FixedSingle,
@@ -250,7 +251,7 @@ internal sealed class MainForm : Form, IMainView
 
         var cardResultados = new Panel
         {
-            Location = new Point(24, 350),
+            Location = new Point(24, 376),
             Size = new Size(804, 214),
             BackColor = Color.White,
             BorderStyle = BorderStyle.FixedSingle,
