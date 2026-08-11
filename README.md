@@ -1,49 +1,86 @@
-# Gerador Mega Sena
+# Gerador de Loterias CAIXA
 
-Gerador de jogos aleatorios para Mega Sena via console, com foco em simplicidade, rapidez e jogadas sem repeticao.
+Aplicacao desktop em .NET 8 (WinForms) para gerar jogadas unicas de varias loterias da CAIXA, com arquitetura em camadas e codigo orientado a Clean Code.
 
-## O que este projeto faz
+## Objetivo
 
-Este app permite:
+Permitir que o usuario:
 
-- Informar quantos numeros cada jogo deve ter.
-- Informar quantas jogadas deseja gerar.
-- Gerar jogadas com numeros unicos dentro do intervalo de 1 a 60.
-- Evitar jogadas duplicadas na mesma execucao.
-- Exibir os numeros ordenados e formatados (ex.: `01 - 07 - 19 - 33 - 44 - 60`).
+- Escolha a modalidade da loteria.
+- Informe quantidade de numeros por jogada (respeitando as regras da modalidade).
+- Informe quantidade de jogadas.
+- Gere jogadas unicas, ordenadas e formatadas.
 
-## Features
+## Modalidades suportadas
 
-- Aplicacao console em C# (.NET 8).
-- Interface textual com animacao leve de digitacao.
-- Validacao de entrada (somente inteiros positivos).
-- Validacao matematica para garantir que a quantidade solicitada de jogadas unicas e possivel.
-- Gera jogos sem repeticao de numero dentro de cada jogada.
+- Mega-Sena: 6 a 20 numeros entre 1 e 60
+- Lotofacil: 15 a 20 numeros entre 1 e 25
+- Quina: 5 a 15 numeros entre 1 e 80
+- Lotomania: 50 numeros entre 1 e 100
+- Dupla Sena: 6 a 15 numeros entre 1 e 50
+- Timemania: 10 numeros entre 1 e 80 (sem Time do Coracao)
+- Dia de Sorte: 7 a 15 numeros entre 1 e 31 (sem Mes da Sorte)
 
-## Tecnologias
+## Arquitetura
 
-- C#
-- .NET 8
+O projeto foi reorganizado com separacao de responsabilidades inspirada em Clean Architecture e com fluxo MVC na camada de apresentacao.
 
-## Estrutura do projeto
+### Camadas
+
+- Domain
+	- Entidades e regras puras de negocio.
+	- Servicos de dominio (geracao de jogadas e matematica combinatoria).
+- Application
+	- Casos de uso e contratos.
+	- Orquestracao de validacoes e execucao da regra de negocio.
+- Infrastructure
+	- Implementacoes concretas para dados/configuracoes (catalogo de jogos).
+- Presentation
+	- View em WinForms.
+	- Controller que reage a eventos da UI e aciona o caso de uso.
+
+### Padroes utilizados
+
+- MVC (na apresentacao): MainForm + MainController.
+- Use Case (Application): GeneratePlaysUseCase.
+- Repository-like Catalog (Application/Infrastructure): ILotteryGameCatalog + LotteryGameCatalog.
+- Composition Root (Program): montagem explicita das dependencias.
+
+## Estrutura de pastas
 
 ```text
-GeradorMegaSena/
-|-- Gerador.Mega.Sena.sln
-|-- Gerador.Mega.Sena/
-|   |-- Gerador.Mega.Sena.csproj
-|   |-- Program.cs
-|-- README.md
-|-- LICENSE
+Gerador.Mega.Sena/
+	Application/
+		Abstractions/
+			ILotteryGameCatalog.cs
+		UseCases/
+			GeneratePlaysUseCase.cs
+	Domain/
+		Entities/
+			LotteryGame.cs
+		Services/
+			CombinationMath.cs
+			UniquePlayGenerator.cs
+	Infrastructure/
+		Catalog/
+			LotteryGameCatalog.cs
+	Presentation/
+		Controllers/
+			MainController.cs
+		Views/
+			IMainView.cs
+			MainForm.cs
+	Program.cs
 ```
 
 ## Como executar
 
 ### Pre-requisitos
 
-- .NET SDK 8.0 ou superior instalado
+- .NET SDK 8.0 ou superior
+- Windows (projeto WinForms)
 
-### Rodando no terminal
+### Rodar localmente
 
 Na raiz do repositorio:
 
@@ -51,96 +88,38 @@ Na raiz do repositorio:
 dotnet run --project Gerador.Mega.Sena/Gerador.Mega.Sena.csproj
 ```
 
-Opcionalmente:
+### Build
 
 ```bash
-cd Gerador.Mega.Sena
-dotnet run
-```
-
-## Exemplo de uso
-
-```text
-Por favor me diga quantos numeros voce precisa agora?
-6
-
-Por favor me diga quantas jogadas voce precisa agora?
-3
-
->> 03 - 08 - 14 - 26 - 39 - 55 <<
->> 01 - 10 - 18 - 33 - 45 - 60 <<
->> 05 - 12 - 21 - 34 - 46 - 58 <<
+dotnet build Gerador.Mega.Sena/Gerador.Mega.Sena.csproj
 ```
 
 ## Regras e validacoes
 
-O programa protege contra cenarios invalidos:
+- Nao permite jogadas fora dos limites da modalidade.
+- Nao permite quantidade de jogadas menor que 1.
+- Verifica limite combinatorio antes de tentar gerar todas as jogadas.
+- Retorna aviso quando nao consegue concluir 100% das jogadas dentro do limite de tentativas.
 
-- Nao aceita entrada vazia, texto ou numero menor/igual a zero.
-- Nao permite pedir mais numeros por jogo do que o intervalo comporta (maximo 60).
-- Verifica se a quantidade de jogadas unicas solicitada e matematicamente possivel.
+## Qualidade do codigo
 
-Exemplo:
+- Classes pequenas e coesas.
+- Nomes explicitos.
+- Dependencias invertidas via interfaces na camada Application.
+- Documentacao XML em classes principais.
+- Regra de negocio isolada da UI.
 
-- Se pedir 61 numeros em um jogo, o programa encerra com mensagem de erro.
-- Se pedir mais jogadas unicas do que as combinacoes disponiveis para aquele tamanho de jogo, tambem encerra com aviso.
+## Proximos passos sugeridos
 
-## Como funciona por dentro
-
-1. O intervalo base e de 1 a 60.
-2. Para cada jogada, o programa embaralha parcialmente uma lista de 1 a 60.
-3. Seleciona os `k` primeiros numeros (sem repeticao dentro da jogada).
-4. Ordena os numeros para exibicao.
-5. Usa um `HashSet` para garantir que uma jogada inteira nao se repita.
-
-### Controle de combinacoes
-
-Antes de gerar, o app estima se existe espaco combinatorio suficiente usando combinacoes:
-
-$$
-\binom{n}{k} = \frac{n!}{k!(n-k)!}
-$$
-
-Onde:
-
-- $n = 60$ (tamanho do universo)
-- $k = quantidade\ de\ numeros\ por\ jogada$
-
-Isso evita loops longos quando o usuario pede mais jogadas unicas do que o possivel.
-
-## Curiosidade divertida
-
-Nenhum gerador aumenta sua chance real de ganhar alem das regras da loteria, mas ele pode:
-
-- poupar tempo,
-- evitar erro manual,
-- e deixar o ritual de escolha dos numeros mais divertido.
-
-Em resumo: sorte nao se programa... mas um bom gerador sim.
-
-## Ideias para evolucao
-
-- Exportar jogadas para TXT/CSV.
-- Permitir escolher intervalo customizado.
-- Historico de jogadas geradas.
-- Modo rapido (sem animacao).
-- Testes automatizados para regras e funcoes matematicas.
-
-## Contribuicao
-
-Contribuicoes sao bem-vindas.
-
-Fluxo sugerido:
-
-1. Faca um fork.
-2. Crie uma branch para sua feature (`feature/minha-melhoria`).
-3. Commit suas alteracoes.
-4. Abra um Pull Request.
+- Adicionar testes unitarios para Domain e Application.
+- Adicionar exportacao para TXT/CSV.
+- Adicionar Time do Coracao (Timemania) e Mes da Sorte (Dia de Sorte).
+- Criar instalador/publicacao self-contained.
 
 ## Licenca
 
-Este projeto esta sob a licenca descrita no arquivo `LICENSE`.
+Este projeto esta sob a licenca descrita em LICENSE.
 
 ## Aviso
 
-Este projeto tem finalidade educacional e de entretenimento.
+Projeto com finalidade educacional e de entretenimento.
