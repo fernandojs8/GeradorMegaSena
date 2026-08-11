@@ -10,16 +10,50 @@ namespace Gerador.Mega.Sena.Presentation.Views;
 internal sealed class MainForm : Form, IMainView
 {
     private MainController? _controller;
+    private bool _isBindingLanguages;
     private readonly Dictionary<string, GameOptionViewModel> _gamesById = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, LanguageOptionViewModel> _languagesByCode = new(StringComparer.OrdinalIgnoreCase);
+    private UiTextViewModel _texts = new()
+    {
+        FormTitle = "Gerador de Loterias CAIXA",
+        HeaderTitle = "Gerador de Jogos das Loterias",
+        HeaderSubtitle = "Escolha o jogo, informe os numeros e gere jogadas unicas em segundos.",
+        LanguageLabel = "🌐 Idioma",
+        GameLabel = "Modalidade",
+        PicksLabel = "Quantidade de numeros",
+        PlayCountLabel = "Quantidade de jogadas:",
+        GenerateButton = "Gerar Jogadas",
+        ResultsTitle = "Jogadas Geradas",
+        ReadyStatus = "Pronto para gerar.",
+        FixedPickStatusTemplate = "Para {0}, a quantidade de numeros e fixa em {1}.",
+        OutputGameLabel = "Jogo",
+        OutputConfigLabel = "Configuracao",
+        WarningLabel = "Aviso",
+        SuccessStatusTemplate = "Geradas {0} jogadas com sucesso.",
+        SuccessStatusWithWarningTemplate = "Geradas {0} jogadas com aviso.",
+        DescriptionRangeTemplate = "Escolha de {0} a {1} numeros entre {2} e {3}.",
+        DescriptionFixedTemplate = "Escolha fixa de {0} numeros entre {1} e {2}."
+    };
+
+    private readonly ComboBox _comboIdiomas;
     private readonly ComboBox _comboJogos;
     private readonly NumericUpDown _inputQuantidadeNumeros;
     private readonly NumericUpDown _inputQuantidadeJogadas;
     private readonly RichTextBox _painelResultados;
     private readonly Label _labelStatus;
     private readonly Label _labelRegras;
+    private readonly Label _labelIdioma;
+    private readonly Label _titulo;
+    private readonly Label _subtitulo;
+    private readonly Label _labelJogo;
+    private readonly Label _labelNumeros;
+    private readonly Label _labelJogadas;
+    private readonly Label _tituloResultados;
     private readonly Button _botaoGerar;
 
     public event EventHandler? GenerateRequested;
+
+    public event EventHandler? LanguageChanged;
 
     public string SelectedGameId
     {
@@ -34,13 +68,26 @@ internal sealed class MainForm : Form, IMainView
         }
     }
 
+    public string SelectedLanguageCode
+    {
+        get
+        {
+            if (_comboIdiomas.SelectedItem is ComboItem item)
+            {
+                return item.Id;
+            }
+
+            return string.Empty;
+        }
+    }
+
     public int PicksPerPlay => (int)_inputQuantidadeNumeros.Value;
 
     public int PlayCount => (int)_inputQuantidadeJogadas.Value;
 
     public MainForm()
     {
-        Text = "Gerador de Loterias CAIXA";
+        Text = _texts.FormTitle;
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(860, 600);
         BackColor = Color.FromArgb(240, 244, 247);
@@ -55,9 +102,9 @@ internal sealed class MainForm : Form, IMainView
             CorFinal = Color.FromArgb(10, 124, 138)
         };
 
-        var titulo = new Label
+        _titulo = new Label
         {
-            Text = "Gerador de Jogos das Loterias",
+            Text = _texts.HeaderTitle,
             Font = new Font("Segoe UI Semibold", 22F, FontStyle.Bold, GraphicsUnit.Point),
             AutoSize = true,
             ForeColor = Color.White,
@@ -65,9 +112,9 @@ internal sealed class MainForm : Form, IMainView
             BackColor = Color.Transparent
         };
 
-        var subtitulo = new Label
+        _subtitulo = new Label
         {
-            Text = "Escolha o jogo, informe os numeros e gere jogadas unicas em segundos.",
+            Text = _texts.HeaderSubtitle,
             Font = new Font("Segoe UI", 10.5F, FontStyle.Regular, GraphicsUnit.Point),
             AutoSize = true,
             ForeColor = Color.FromArgb(220, 241, 246),
@@ -75,8 +122,36 @@ internal sealed class MainForm : Form, IMainView
             BackColor = Color.Transparent
         };
 
-        faixaTopo.Controls.Add(titulo);
-        faixaTopo.Controls.Add(subtitulo);
+        _labelIdioma = new Label
+        {
+            Text = _texts.LanguageLabel,
+            AutoSize = true,
+            ForeColor = Color.FromArgb(230, 245, 250),
+            Location = new Point(610, 20),
+            BackColor = Color.Transparent,
+            Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold, GraphicsUnit.Point)
+        };
+
+        _comboIdiomas = new ComboBox
+        {
+            Location = new Point(612, 45),
+            Size = new Size(210, 31),
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            FlatStyle = FlatStyle.Flat,
+            BackColor = Color.White
+        };
+        _comboIdiomas.SelectedIndexChanged += (_, _) =>
+        {
+            if (!_isBindingLanguages)
+            {
+                LanguageChanged?.Invoke(this, EventArgs.Empty);
+            }
+        };
+
+        faixaTopo.Controls.Add(_titulo);
+        faixaTopo.Controls.Add(_subtitulo);
+        faixaTopo.Controls.Add(_labelIdioma);
+        faixaTopo.Controls.Add(_comboIdiomas);
 
         var cardEntrada = new Panel
         {
@@ -87,9 +162,9 @@ internal sealed class MainForm : Form, IMainView
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
         };
 
-        var labelJogo = new Label
+        _labelJogo = new Label
         {
-            Text = "Modalidade",
+            Text = _texts.GameLabel,
             AutoSize = true,
             Location = new Point(22, 20),
             ForeColor = Color.FromArgb(34, 52, 70)
@@ -104,9 +179,9 @@ internal sealed class MainForm : Form, IMainView
         };
         _comboJogos.SelectedIndexChanged += OnGameSelectionChanged;
 
-        var labelNumeros = new Label
+        _labelNumeros = new Label
         {
-            Text = "Quantidade de numeros",
+            Text = _texts.PicksLabel,
             AutoSize = true,
             Location = new Point(364, 20),
             ForeColor = Color.FromArgb(34, 52, 70)
@@ -122,9 +197,9 @@ internal sealed class MainForm : Form, IMainView
             BorderStyle = BorderStyle.FixedSingle
         };
 
-        var labelJogadas = new Label
+        _labelJogadas = new Label
         {
-            Text = "Quantidade de jogadas:",
+            Text = _texts.PlayCountLabel,
             AutoSize = true,
             Location = new Point(566, 20),
             ForeColor = Color.FromArgb(34, 52, 70)
@@ -152,7 +227,7 @@ internal sealed class MainForm : Form, IMainView
 
         _botaoGerar = new Button
         {
-            Text = "Gerar Jogadas",
+            Text = _texts.GenerateButton,
             Location = new Point(568, 128),
             Size = new Size(212, 42),
             BackColor = Color.FromArgb(14, 140, 93),
@@ -166,7 +241,7 @@ internal sealed class MainForm : Form, IMainView
 
         _labelStatus = new Label
         {
-            Text = "Pronto para gerar.",
+            Text = _texts.ReadyStatus,
             AutoSize = true,
             Location = new Point(22, 138),
             ForeColor = Color.FromArgb(74, 95, 113),
@@ -182,20 +257,20 @@ internal sealed class MainForm : Form, IMainView
             Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
         };
 
-        var tituloResultados = new Label
+        _tituloResultados = new Label
         {
-            Text = "Jogadas Geradas",
+            Text = _texts.ResultsTitle,
             AutoSize = true,
             Location = new Point(16, 14),
             ForeColor = Color.FromArgb(31, 49, 70),
             Font = new Font("Segoe UI Semibold", 11.5F, FontStyle.Bold, GraphicsUnit.Point)
         };
 
-        cardEntrada.Controls.Add(labelNumeros);
+        cardEntrada.Controls.Add(_labelNumeros);
         cardEntrada.Controls.Add(_inputQuantidadeNumeros);
-        cardEntrada.Controls.Add(labelJogo);
+        cardEntrada.Controls.Add(_labelJogo);
         cardEntrada.Controls.Add(_comboJogos);
-        cardEntrada.Controls.Add(labelJogadas);
+        cardEntrada.Controls.Add(_labelJogadas);
         cardEntrada.Controls.Add(_inputQuantidadeJogadas);
         cardEntrada.Controls.Add(_labelRegras);
         cardEntrada.Controls.Add(_botaoGerar);
@@ -213,7 +288,7 @@ internal sealed class MainForm : Form, IMainView
             Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
         };
 
-        cardResultados.Controls.Add(tituloResultados);
+        cardResultados.Controls.Add(_tituloResultados);
         cardResultados.Controls.Add(_painelResultados);
 
         Controls.Add(faixaTopo);
@@ -227,7 +302,29 @@ internal sealed class MainForm : Form, IMainView
         _controller.Initialize();
     }
 
-    public void BindGames(IReadOnlyList<GameOptionViewModel> games)
+    public void BindLanguages(IReadOnlyList<LanguageOptionViewModel> languages, string selectedLanguageCode)
+    {
+        _isBindingLanguages = true;
+
+        _languagesByCode.Clear();
+        _comboIdiomas.Items.Clear();
+
+        foreach (LanguageOptionViewModel language in languages)
+        {
+            _languagesByCode[language.Code] = language;
+            _comboIdiomas.Items.Add(new ComboItem(language.Code, language.DisplayName));
+        }
+
+        int index = _comboIdiomas.Items
+            .Cast<ComboItem>()
+            .ToList()
+            .FindIndex(x => string.Equals(x.Id, selectedLanguageCode, StringComparison.OrdinalIgnoreCase));
+
+        _comboIdiomas.SelectedIndex = index >= 0 ? index : 0;
+        _isBindingLanguages = false;
+    }
+
+    public void BindGames(IReadOnlyList<GameOptionViewModel> games, string? selectedGameId)
     {
         _gamesById.Clear();
         _comboJogos.Items.Clear();
@@ -240,8 +337,28 @@ internal sealed class MainForm : Form, IMainView
 
         if (_comboJogos.Items.Count > 0)
         {
-            _comboJogos.SelectedIndex = 0;
+            int selectedIndex = _comboJogos.Items
+                .Cast<ComboItem>()
+                .ToList()
+                .FindIndex(x => string.Equals(x.Id, selectedGameId, StringComparison.Ordinal));
+
+            _comboJogos.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
         }
+    }
+
+    public void ApplyTexts(UiTextViewModel texts)
+    {
+        _texts = texts;
+        Text = texts.FormTitle;
+        _titulo.Text = texts.HeaderTitle;
+        _subtitulo.Text = texts.HeaderSubtitle;
+        _labelIdioma.Text = texts.LanguageLabel;
+        _labelJogo.Text = texts.GameLabel;
+        _labelNumeros.Text = texts.PicksLabel;
+        _labelJogadas.Text = texts.PlayCountLabel;
+        _botaoGerar.Text = texts.GenerateButton;
+        _tituloResultados.Text = texts.ResultsTitle;
+        _labelStatus.Text = texts.ReadyStatus;
     }
 
     public void ApplyGameRules(GameRulesViewModel rules)
@@ -263,8 +380,8 @@ internal sealed class MainForm : Form, IMainView
     public void ShowSuccess(GenerateOutputViewModel output)
     {
         _painelResultados.Clear();
-        _painelResultados.AppendText($"Jogo: {output.GameName}\n");
-        _painelResultados.AppendText($"Configuracao: {output.PicksPerPlay} numero(s) por jogada\n");
+        _painelResultados.AppendText($"{_texts.OutputGameLabel}: {output.GameName}\n");
+        _painelResultados.AppendText($"{_texts.OutputConfigLabel}: {output.PicksPerPlay}\n");
         _painelResultados.AppendText("------------------------------------------------------------\n");
 
         for (int i = 0; i < output.Plays.Count; i++)
@@ -274,12 +391,12 @@ internal sealed class MainForm : Form, IMainView
 
         _labelStatus.ForeColor = Color.FromArgb(14, 140, 93);
         _labelStatus.Text = output.Warning is null
-            ? $"Geradas {output.Plays.Count} jogadas com sucesso."
-            : $"Geradas {output.Plays.Count} jogadas com aviso.";
+            ? string.Format(_texts.SuccessStatusTemplate, output.Plays.Count)
+            : string.Format(_texts.SuccessStatusWithWarningTemplate, output.Plays.Count);
 
         if (output.Warning is not null)
         {
-            _painelResultados.AppendText($"\nAviso: {output.Warning}");
+            _painelResultados.AppendText($"\n{_texts.WarningLabel}: {output.Warning}");
         }
     }
 

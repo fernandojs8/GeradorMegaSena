@@ -7,6 +7,7 @@ Aplicacao desktop em .NET 8 (WinForms) para gerar jogadas unicas de varias loter
 Permitir que o usuario:
 
 - Escolha a modalidade da loteria.
+- Escolha o idioma da interface (English, Portugues, Francais, Espanhol, Alemao).
 - Informe quantidade de numeros por jogada (respeitando as regras da modalidade).
 - Informe quantidade de jogadas.
 - Gere jogadas unicas, ordenadas e formatadas.
@@ -34,7 +35,7 @@ O projeto foi reorganizado com separacao de responsabilidades inspirada em Clean
 	- Casos de uso e contratos.
 	- Orquestracao de validacoes e execucao da regra de negocio.
 - Infrastructure
-	- Implementacoes concretas para dados/configuracoes (catalogo de jogos).
+	- Implementacoes concretas para dados/configuracoes (catalogo de jogos e localizacao).
 - Presentation
 	- View em WinForms.
 	- Controller que reage a eventos da UI e aciona o caso de uso.
@@ -44,6 +45,7 @@ O projeto foi reorganizado com separacao de responsabilidades inspirada em Clean
 - MVC (na apresentacao): MainForm + MainController.
 - Use Case (Application): GeneratePlaysUseCase.
 - Repository-like Catalog (Application/Infrastructure): ILotteryGameCatalog + LotteryGameCatalog.
+- Localization Service (Application/Infrastructure): ILocalizationService + InMemoryLocalizationService.
 - Composition Root (Program): montagem explicita das dependencias.
 
 ## Estrutura de pastas
@@ -53,6 +55,7 @@ Gerador.Mega.Sena/
 	Application/
 		Abstractions/
 			ILotteryGameCatalog.cs
+			ILocalizationService.cs
 		UseCases/
 			GeneratePlaysUseCase.cs
 	Domain/
@@ -64,6 +67,8 @@ Gerador.Mega.Sena/
 	Infrastructure/
 		Catalog/
 			LotteryGameCatalog.cs
+		Localization/
+			InMemoryLocalizationService.cs
 	Presentation/
 		Controllers/
 			MainController.cs
@@ -94,12 +99,51 @@ dotnet run --project Gerador.Mega.Sena/Gerador.Mega.Sena.csproj
 dotnet build Gerador.Mega.Sena/Gerador.Mega.Sena.csproj
 ```
 
+### Testes unitarios
+
+```bash
+dotnet test Gerador.Mega.Sena.sln
+```
+
 ## Regras e validacoes
 
 - Nao permite jogadas fora dos limites da modalidade.
 - Nao permite quantidade de jogadas menor que 1.
+- Nao permite modalidade vazia ou invalida.
+- Nao permite quantidade de jogadas acima do limite de seguranca (100.000).
 - Verifica limite combinatorio antes de tentar gerar todas as jogadas.
 - Retorna aviso quando nao consegue concluir 100% das jogadas dentro do limite de tentativas.
+
+## Testes e edge cases
+
+A suite de testes cobre:
+
+- Dominio matematico:
+	- argumentos invalidos na combinacao limitada
+	- retorno com short-circuit no limite configurado
+	- validacao de valores conhecidos de combinacao
+- Gerador de jogadas:
+	- garantia de unicidade entre jogadas
+	- validacao de quantidade de numeros por jogada
+	- validacao de faixa numerica e ordenacao do resultado
+- Caso de uso:
+	- modalidade inexistente
+	- estouro de limite de seguranca
+	- pedido combinatoriamente impossivel
+	- fluxo feliz com retorno de sucesso
+- Idioma/localizacao:
+	- idiomas disponiveis esperados
+	- traducao aplicada ao trocar idioma
+	- fallback para idioma padrao em codigo invalido
+
+Projeto de testes: Gerador.Mega.Sena.Tests
+
+## Consideracoes de seguranca
+
+- Limite de seguranca para quantidade de jogadas evita uso abusivo de CPU/memoria.
+- Validacao defensiva de entrada no caso de uso para evitar requests malformados.
+- Regra combinatoria executada antes da geracao para reduzir risco de loops longos.
+- Aplicacao nao utiliza rede, credenciais ou persistencia de dados sensiveis.
 
 ## Qualidade do codigo
 

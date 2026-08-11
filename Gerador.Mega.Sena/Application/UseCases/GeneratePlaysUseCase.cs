@@ -8,6 +8,8 @@ namespace Gerador.Mega.Sena.Application.UseCases;
 /// </summary>
 internal sealed class GeneratePlaysUseCase
 {
+    private const int MaxAllowedPlayCount = 100000;
+
     private readonly ILotteryGameCatalog _catalog;
     private readonly UniquePlayGenerator _generator;
 
@@ -19,12 +21,22 @@ internal sealed class GeneratePlaysUseCase
 
     public GeneratePlaysResult Execute(GeneratePlaysRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.GameId))
+        {
+            return GeneratePlaysResult.Fail("Modalidade invalida.");
+        }
+
         if (request.PlayCount <= 0)
         {
             return GeneratePlaysResult.Fail("Quantidade de jogadas deve ser maior que zero.");
         }
 
-        var game = _catalog.GetById(request.GameId);
+        if (request.PlayCount > MaxAllowedPlayCount)
+        {
+            return GeneratePlaysResult.Fail($"Quantidade de jogadas excede o limite de seguranca de {MaxAllowedPlayCount}.");
+        }
+
+        var game = _catalog.GetById(request.GameId.Trim());
         if (game is null)
         {
             return GeneratePlaysResult.Fail("Modalidade nao encontrada.");

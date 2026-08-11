@@ -1,6 +1,7 @@
 ﻿using Gerador.Mega.Sena.Application.UseCases;
 using Gerador.Mega.Sena.Domain.Services;
 using Gerador.Mega.Sena.Infrastructure.Catalog;
+using Gerador.Mega.Sena.Infrastructure.Localization;
 using Gerador.Mega.Sena.Presentation.Controllers;
 using Gerador.Mega.Sena.Presentation.Views;
 
@@ -14,11 +15,12 @@ internal static class Program
         ApplicationConfiguration.Initialize();
 
         var catalog = new LotteryGameCatalog();
+        var localization = new InMemoryLocalizationService();
         var playGenerator = new UniquePlayGenerator();
         var useCase = new GeneratePlaysUseCase(catalog, playGenerator);
 
         var form = new MainForm();
-        var controller = new MainController(form, catalog, useCase);
+        var controller = new MainController(form, catalog, localization, useCase);
 
         form.AttachController(controller);
         System.Windows.Forms.Application.Run(form);

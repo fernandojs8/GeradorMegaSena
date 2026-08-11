@@ -7,15 +7,23 @@ internal interface IMainView
 {
     event EventHandler GenerateRequested;
 
+    event EventHandler LanguageChanged;
+
     string SelectedGameId { get; }
+
+    string SelectedLanguageCode { get; }
 
     int PicksPerPlay { get; }
 
     int PlayCount { get; }
 
-    void BindGames(IReadOnlyList<GameOptionViewModel> games);
+    void BindLanguages(IReadOnlyList<LanguageOptionViewModel> languages, string selectedLanguageCode);
+
+    void BindGames(IReadOnlyList<GameOptionViewModel> games, string? selectedGameId);
 
     void ApplyGameRules(GameRulesViewModel rules);
+
+    void ApplyTexts(UiTextViewModel texts);
 
     void ShowError(string message);
 
@@ -37,11 +45,67 @@ internal sealed class GameOptionViewModel
 
     public required string Description { get; init; }
 
+    public required int MinNumber { get; init; }
+
+    public required int MaxNumber { get; init; }
+
     public required int MinPicks { get; init; }
 
     public required int MaxPicks { get; init; }
 
     public bool HasFixedPickCount => MinPicks == MaxPicks;
+}
+
+/// <summary>
+/// UI model for language option selection.
+/// </summary>
+internal sealed class LanguageOptionViewModel
+{
+    public required string Code { get; init; }
+
+    public required string DisplayName { get; init; }
+}
+
+/// <summary>
+/// Localized text bag for UI rendering.
+/// </summary>
+internal sealed class UiTextViewModel
+{
+    public required string FormTitle { get; init; }
+
+    public required string HeaderTitle { get; init; }
+
+    public required string HeaderSubtitle { get; init; }
+
+    public required string LanguageLabel { get; init; }
+
+    public required string GameLabel { get; init; }
+
+    public required string PicksLabel { get; init; }
+
+    public required string PlayCountLabel { get; init; }
+
+    public required string GenerateButton { get; init; }
+
+    public required string ResultsTitle { get; init; }
+
+    public required string ReadyStatus { get; init; }
+
+    public required string FixedPickStatusTemplate { get; init; }
+
+    public required string OutputGameLabel { get; init; }
+
+    public required string OutputConfigLabel { get; init; }
+
+    public required string WarningLabel { get; init; }
+
+    public required string SuccessStatusTemplate { get; init; }
+
+    public required string SuccessStatusWithWarningTemplate { get; init; }
+
+    public required string DescriptionRangeTemplate { get; init; }
+
+    public required string DescriptionFixedTemplate { get; init; }
 }
 
 /// <summary>

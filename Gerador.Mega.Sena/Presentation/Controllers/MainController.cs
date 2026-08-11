@@ -11,44 +11,40 @@ internal sealed class MainController
 {
     private readonly IMainView _view;
     private readonly ILotteryGameCatalog _catalog;
+    private readonly ILocalizationService _localization;
     private readonly GeneratePlaysUseCase _generatePlaysUseCase;
     private IReadOnlyList<GameOptionViewModel> _games = [];
 
-    public MainController(IMainView view, ILotteryGameCatalog catalog, GeneratePlaysUseCase generatePlaysUseCase)
+    public MainController(
+        IMainView view,
+        ILotteryGameCatalog catalog,
+        ILocalizationService localization,
+        GeneratePlaysUseCase generatePlaysUseCase)
     {
         _view = view;
         _catalog = catalog;
+        _localization = localization;
         _generatePlaysUseCase = generatePlaysUseCase;
 
         _view.GenerateRequested += OnGenerateRequested;
+        _view.LanguageChanged += OnLanguageChanged;
     }
 
     public void Initialize()
     {
-        _games = _catalog
-            .GetAll()
-            .Select(game => new GameOptionViewModel
+        IReadOnlyList<LanguageOptionViewModel> languages = _localization
+            .GetLanguages()
+            .Select(lang => new LanguageOptionViewModel
             {
-                Id = game.Id,
-                Name = game.Name,
-                Description = game.Description,
-                MinPicks = game.MinPicks,
-                MaxPicks = game.MaxPicks
+                Code = lang.Code,
+                DisplayName = lang.DisplayName
             })
             .ToList();
 
-        _view.BindGames(_games);
+        _view.BindLanguages(languages, _localization.DefaultLanguageCode);
+        _localization.SetLanguage(_view.SelectedLanguageCode);
 
-        var first = _games.FirstOrDefault();
-        if (first is null)
-        {
-            _view.ShowError("Nenhuma modalidade foi configurada.");
-            _view.SetGenerateEnabled(false);
-            return;
-        }
-
-        ApplyRules(first);
-        _view.ShowInfo("Pronto para gerar.");
+        ApplyLanguageDependentUi(selectedGameId: null);
     }
 
     public void ApplySelectedGameRules(string selectedGameId)
@@ -63,11 +59,57 @@ internal sealed class MainController
 
         if (game.HasFixedPickCount)
         {
-            _view.ShowInfo($"Para {game.Name}, a quantidade de numeros e fixa em {game.MinPicks}.");
+            _view.ShowInfo(string.Format(_localization.Get("status.fixedTemplate"), game.Name, game.MinPicks));
         }
         else
         {
-            _view.ShowInfo("Pronto para gerar.");
+            _view.ShowInfo(_localization.Get("status.ready"));
+        }
+    }
+
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        _localization.SetLanguage(_view.SelectedLanguageCode);
+        ApplyLanguageDependentUi(_view.SelectedGameId);
+    }
+
+    private void ApplyLanguageDependentUi(string? selectedGameId)
+    {
+        ApplyTexts();
+
+        _games = _catalog
+            .GetAll()
+            .Select(game => new GameOptionViewModel
+            {
+                Id = game.Id,
+                Name = game.Name,
+                Description = BuildLocalizedDescription(game.MinPicks, game.MaxPicks, game.MinNumber, game.MaxNumber),
+                MinNumber = game.MinNumber,
+                MaxNumber = game.MaxNumber,
+                MinPicks = game.MinPicks,
+                MaxPicks = game.MaxPicks
+            })
+            .ToList();
+
+        _view.BindGames(_games, selectedGameId);
+
+        var first = _games.FirstOrDefault();
+        if (first is null)
+        {
+            _view.ShowError(_localization.Get("msg.noGames"));
+            _view.SetGenerateEnabled(false);
+            return;
+        }
+
+        GameOptionViewModel selected = _games.FirstOrDefault(x => x.Id == selectedGameId) ?? first;
+        ApplyRules(selected);
+        if (selected.HasFixedPickCount)
+        {
+            _view.ShowInfo(string.Format(_localization.Get("status.fixedTemplate"), selected.Name, selected.MinPicks));
+        }
+        else
+        {
+            _view.ShowInfo(_localization.Get("status.ready"));
         }
     }
 
@@ -86,7 +128,7 @@ internal sealed class MainController
 
             if (!result.IsSuccess)
             {
-                _view.ShowError(result.Error ?? "Nao foi possivel gerar as jogadas.");
+                _view.ShowError(result.Error ?? _localization.Get("msg.errorGeneric"));
                 return;
             }
 
@@ -113,5 +155,40 @@ internal sealed class MainController
             MaxPicks = game.MaxPicks,
             HasFixedPickCount = game.HasFixedPickCount
         });
+    }
+
+    private void ApplyTexts()
+    {
+        _view.ApplyTexts(new UiTextViewModel
+        {
+            FormTitle = _localization.Get("form.title"),
+            HeaderTitle = _localization.Get("header.title"),
+            HeaderSubtitle = _localization.Get("header.subtitle"),
+            LanguageLabel = _localization.Get("label.language"),
+            GameLabel = _localization.Get("label.game"),
+            PicksLabel = _localization.Get("label.picks"),
+            PlayCountLabel = _localization.Get("label.playCount"),
+            GenerateButton = _localization.Get("button.generate"),
+            ResultsTitle = _localization.Get("results.title"),
+            ReadyStatus = _localization.Get("status.ready"),
+            FixedPickStatusTemplate = _localization.Get("status.fixedTemplate"),
+            OutputGameLabel = _localization.Get("output.game"),
+            OutputConfigLabel = _localization.Get("output.config"),
+            WarningLabel = _localization.Get("output.warning"),
+            SuccessStatusTemplate = _localization.Get("status.success"),
+            SuccessStatusWithWarningTemplate = _localization.Get("status.successWarning"),
+            DescriptionRangeTemplate = _localization.Get("desc.range"),
+            DescriptionFixedTemplate = _localization.Get("desc.fixed")
+        });
+    }
+
+    private string BuildLocalizedDescription(int minPicks, int maxPicks, int minNumber, int maxNumber)
+    {
+        if (minPicks == maxPicks)
+        {
+            return string.Format(_localization.Get("desc.fixed"), minPicks, minNumber, maxNumber);
+        }
+
+        return string.Format(_localization.Get("desc.range"), minPicks, maxPicks, minNumber, maxNumber);
     }
 }
