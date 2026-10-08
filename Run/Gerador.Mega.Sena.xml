@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Gerador.Mega.Sena</name>
+    </assembly>
+    <members>
+        <member name="T:Gerador.Mega.Sena.Application.Abstractions.ILocalizationService">
+            <summary>
+            Provides localized text and language metadata for the UI layer.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Application.Abstractions.LanguageOption">
+            <summary>
+            Represents a selectable language option.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Application.Abstractions.ILotteryGameCatalog">
+            <summary>
+            Exposes read-only access to configured lottery games.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Application.UseCases.GeneratePlaysUseCase">
+            <summary>
+            Coordinates validation and generation of lottery plays.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Application.UseCases.GeneratePlaysRequest">
+            <summary>
+            Input model for play generation.
+            </summary>
+        </member>
+        <member name="P:Gerador.Mega.Sena.Application.UseCases.GeneratePlaysRequest.SpecialPick">
+            <summary>
+            Specific special pick value; null means a random option is chosen per play.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Application.UseCases.GeneratePlaysResult">
+            <summary>
+            Output model for play generation.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Domain.Entities.LotteryGame">
+            <summary>
+            Represents the official numeric rules for a lottery game.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Domain.Services.CombinationMath">
+            <summary>
+            Provides bounded combinatorics operations used to validate request feasibility.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Domain.Services.UniquePlayGenerator">
+            <summary>
+            Generates unique plays for a numeric lottery game.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Domain.Services.PlayBatchResult">
+            <summary>
+            Represents generated plays and optional warning.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Infrastructure.Catalog.LotteryGameCatalog">
+            <summary>
+            In-memory catalog with official game limits from CAIXA pages.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Infrastructure.Localization.InMemoryLocalizationService">
+            <summary>
+            In-memory localization provider for supported UI languages.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Controllers.MainController">
+            <summary>
+            Handles view events and orchestrates use case execution.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.IMainView">
+            <summary>
+            Defines the UI contract used by the controller.
+            </summary>
+        </member>
+        <member name="P:Gerador.Mega.Sena.Presentation.Views.IMainView.SelectedSpecialPick">
+            <summary>
+            Returns the user-chosen special pick value, or null when random is selected.
+            </summary>
+        </member>
+        <member name="M:Gerador.Mega.Sena.Presentation.Views.IMainView.PromptExportFilePath">
+            <summary>
+            Shows a save-file dialog and returns the chosen path, or null if cancelled.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.SpecialPickOptionsViewModel">
+            <summary>
+            UI model for special pick (Time do Coracao / Mes da Sorte).
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.GameOptionViewModel">
+            <summary>
+            UI model used to bind game options.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.LanguageOptionViewModel">
+            <summary>
+            UI model for language option selection.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.UiTextViewModel">
+            <summary>
+            Localized text bag for UI rendering.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.GameRulesViewModel">
+            <summary>
+            UI model with game numeric constraints.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.GenerateOutputViewModel">
+            <summary>
+            UI model for successful generation output.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.MainForm">
+            <summary>
+            WinForms implementation of the main view.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.GradientPanel">
+            <summary>
+            Decorative panel used to paint a diagonal gradient header.
+            </summary>
+        </member>
+        <member name="T:Gerador.Mega.Sena.Presentation.Views.ComboItem">
+            <summary>
+            Simple combo model for id-name binding without exposing domain objects to WinForms controls.
+            </summary>
+        </member>
+        <member name="T:ApplicationConfiguration">
+            <summary>
+             Bootstrap the application configuration.
+            </summary>
+        </member>
+        <member name="M:ApplicationConfiguration.Initialize">
+            <summary>
+             Bootstrap the application as follows:
+             <code>
+             global::System.Windows.Forms.Application.EnableVisualStyles();
+             global::System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
+             global::System.Windows.Forms.Application.SetHighDpiMode(HighDpiMode.SystemAware);
+            </code>
+            </summary>
+        </member>
+    </members>
+</doc>
